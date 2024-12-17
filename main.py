@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bone tree Copy Transforms",
     "author": "blancgoat",
-    "version": (0, 3, 6),
+    "version": (0, 3, 7),
     "blender": (4, 2, 4),
     "location": "View3D > Sidebar > Bonetree",
     "description": "",
@@ -105,6 +105,36 @@ class OBJECT_OT_copy_transforms_operator(bpy.types.Operator):
         add_constraints_recursive(root_bone)
         self.report({'INFO'}, f"Total bones with constraints: {bone_count}")
         return {'FINISHED'}
+    
+# ----------------- Remove Operator -----------------    
+class OBJECT_OT_remove_copy_transforms_operator(bpy.types.Operator):
+    """Remove all Copy Transforms constraints from the child armature"""
+    bl_idname = "object.remove_copy_transforms"
+    bl_label = "Remove Copy Transforms"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        props = context.scene.copy_transforms_props
+
+        # Validate selections
+        if not props.child_armature or props.child_armature.type != 'ARMATURE':
+            self.report({'ERROR'}, "No valid child armature selected.")
+            return {'CANCELLED'}
+
+        child_armature = props.child_armature
+
+        # Remove COPY_TRANSFORMS constraints
+        removed_count = 0
+        for bone in child_armature.pose.bones:
+            constraints = bone.constraints
+            for constraint in constraints:
+                if constraint.type == 'COPY_TRANSFORMS':
+                    constraints.remove(constraint)
+                    removed_count += 1
+
+        # Alert the user
+        self.report({'INFO'}, f"Removed {removed_count} Copy Transforms constraints.")
+        return {'FINISHED'}
 
 # ----------------- UI Panel -----------------
 class VIEW3D_PT_copy_transforms_panel(bpy.types.Panel):
@@ -144,16 +174,18 @@ class VIEW3D_PT_copy_transforms_panel(bpy.types.Panel):
         row.label(text="Traversal Mode:")
         row.prop(props, "traverse_mode", expand=True)
 
-        # Apply Button
+        # Apply and Remove Buttons
         if props.parent_armature and props.child_armature and props.root_bone:
             layout.operator("object.copy_transforms_single_child", text="Apply Copy Transforms", icon='CHECKMARK')
+            layout.operator("object.remove_copy_transforms", text="Remove Copy Transforms", icon='CANCEL')
         else:
-            layout.label(text="Complete all selections to apply", icon='ERROR')
+            layout.label(text="Complete all selections to apply/remove", icon='ERROR')
 
 # ----------------- Register -----------------
 classes = [
     CopyTransformsProperties,
     OBJECT_OT_copy_transforms_operator,
+    OBJECT_OT_remove_copy_transforms_operator,
     VIEW3D_PT_copy_transforms_panel,
 ]
 
