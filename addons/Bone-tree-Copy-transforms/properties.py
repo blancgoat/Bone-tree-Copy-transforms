@@ -12,7 +12,7 @@ class CopyTransformsProperties(bpy.types.PropertyGroup):
         type=bpy.types.Object,
         name="Child Armature",
         description="Target child armature to apply constraints to",
-        update=lambda self, context: validate_armature(self.child_armature, context, "child_armature")
+        update=lambda self, context: self.update_child_armature(context)
     )
     root_bone: bpy.props.StringProperty(
         name="Root Bone",
@@ -27,3 +27,13 @@ class CopyTransformsProperties(bpy.types.PropertyGroup):
         ],
         default='PARENT_BASED'
     )
+
+    def update_child_armature(self, context):
+        """child_armature가 변경될 때 최상단 bone을 자동으로 설정"""
+
+        validate_armature(self.child_armature, context, "child_armature")
+
+        if self.child_armature and self.child_armature.pose and self.child_armature.pose.bones:
+            self.root_bone = self.child_armature.pose.bones[0].name
+        else:
+            self.root_bone = ""
