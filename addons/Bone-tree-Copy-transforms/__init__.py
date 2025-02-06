@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Bone tree Copy Transforms",
     "author": "blancgoat",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (4, 2, 4),
     "location": "View3D > Sidebar > Bonetree",
     "description": "",
